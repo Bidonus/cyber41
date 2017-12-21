@@ -1,14 +1,18 @@
 #coding:utf-8
 import telebot, config
+from telegram import update
 from datetime import date
 import random
 import time
-import os
+import os, re
+import urllib.request, urllib.parse,urllib
+import requests
+from googleapiclient.discovery import build
+import pprint
 
 #----------------------------------------------------------------------------------
 #///////////////////////////////Связь с ботом//////////////////////////////////////
 #----------------------------------------------------------------------------------
-a = 42
 
 bot = telebot.TeleBot(config.token)
 
@@ -17,6 +21,8 @@ bot = telebot.TeleBot(config.token)
 #//////////////////////Логгирование и доп функции//////////////////////////////////
 #----------------------------------------------------------------------------------
 
+
+MY_IP = '127.0.0.1'
 
 def log(message, answer):
     print("\n --------")
@@ -29,14 +35,21 @@ def log(message, answer):
     print(answer)
 
 
-
+'''def google_search(search_term, api_key, cse_id, **kwargs):
+    service = build("customsearch", "v1", developerKey=config.api_key)
+    res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
+    return res['items']
+results = google_search(
+    'stackoverflow site:en.wikipedia.org', my_api_key, my_cse_id, num=10)
+for result in results:
+    pprint.pprint(result)'''
 
 #----------------------------------------------------------------------------------
 #//////////////////////Декораторы основных команд//////////////////////////////////
 #----------------------------------------------------------------------------------
 
 
-#----------------------------------------------------------------------------------
+#-------------------------------Старт функция--------------------------------------
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -47,18 +60,52 @@ def handle_start(message):
     user_markup.row('/stop', '/mod')
     bot.send_message(message.chat.id, "Стартуем", reply_markup=user_markup)
 
-#----------------------------------------------------------------------------------
+#------------------------------Стоп функция-----------------------------------------
 
 @bot.message_handler(commands=['stop'])
 def handle_start(message):
     hide_markup = telebot.types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, "Чтобы вызвать меня - набери /start", reply_markup=hide_markup)
 
-#------------------------------------------------------------------------------------
+#------------------------------Хелп функция------------------------------------------
 
 @bot.message_handler(commands=['help'])
 def handle_text(message):
     bot.send_message(message.chat.id, config.help_message)
+
+
+
+@bot.message_handler(commands=['google'])
+def goo(message):
+    msg = bot.reply_to(message, "Введи запрос")
+    bot.register_next_step_handler(msg, gle)
+def gle(message):
+    from
+
+
+
+   ''' f = {'v': '1.0', 'q': message.text, 'userip': MY_IP}
+    g_search = urllib.parse.urlencode(f)
+    s = requests.Session()
+    url = ('https://ajax.googleapis.com/ajax/services/search/web?' + g_search)
+    r = s.get(url, cookies={'my': 'browser'})
+    response = r.text
+    #
+    pattern = '\"GwebSearch\","unescapedUrl\"\:\"(.*?)\"'
+    g_search = re.findall(pattern, response)
+    print(s)
+    print(g_search)
+    print(response)
+    print(r)
+    if len(g_search) > 0:
+        g_search = g_search[0]
+        g_search = g_search.replace('\\u0026', '&')
+        g_search = g_search.replace('\\u003d', '=')
+        print("doshlo do parsa")
+        bot.send_message(message.chat.id, text=g_search, parse_mode=ParseMode.MARKDOWN)
+    else:
+        bot.send_message(message.chat.id, text='Ничего не найдено.')'''
+
 
 #-----------------------------Калькулятор модуля-------------------------------------
 
@@ -128,7 +175,6 @@ def handle_text(message):
         send = config.wdays[time.localtime().tm_wday+1]
         print(send)
         weekNumber = date.today().isocalendar()[1]
-        #vivod = []
         print("weeknumber is " +str(weekNumber))
         if weekNumber%2 == 0:
             if send in config.shedule['2t']:
@@ -155,7 +201,7 @@ def handle_text(message):
 
 #---------------------------Бесконечная работа--------------------------------------
 
-bot.polling(none_stop=True)
+bot.polling(none_stop=True, interval=0)
 
 
 
