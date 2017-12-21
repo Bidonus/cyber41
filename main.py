@@ -1,6 +1,9 @@
 #coding:utf-8
 import telebot, config
-
+from datetime import date
+import random
+import time
+import os
 
 #----------------------------------------------------------------------------------
 #///////////////////////////////Связь с ботом//////////////////////////////////////
@@ -15,7 +18,15 @@ bot = telebot.TeleBot(config.token)
 #----------------------------------------------------------------------------------
 
 
-
+def log(message, answer):
+    print("\n --------")
+    from datetime import datetime
+    print(datetime.now())
+    print("Сообщение от {0} {1}. {{id = {2}}} \n TEXT = {3}".format(message.from_user.first_name,
+                                                                  message.from_user.last_name,
+                                                                  str(message.from_user.id),
+                                                                  message.text))
+    print(answer)
 
 
 
@@ -23,8 +34,6 @@ bot = telebot.TeleBot(config.token)
 #----------------------------------------------------------------------------------
 #//////////////////////Декораторы основных команд//////////////////////////////////
 #----------------------------------------------------------------------------------
-
-
 
 
 #----------------------------------------------------------------------------------
@@ -74,26 +83,15 @@ def handle_text(message):
     log(message,answer)
 
 
-''''@bot.message_handler(content_types=['document'])
-def handle_docs_photo(message):
-    try:
-        chat_id = message.chat.id
-        file_info = bot.get_file(message.document.file_id)
-        downloaded_file = bot.download_file(file_info.file_path)
-        src = 'C:/Users/ivan.savarin/Documents/GitHub/cyber41/docs/' + message.document.file_name;
-        with open(src, 'wb') as new_file:
-            new_file.write(downloaded_file)
-
-        bot.reply_to(message, "Пожалуй, я сохраню это")
-    except Exception as e:
-        bot.reply_to(message, e)
-'''
-
 
 #----------------------------------------------------------------------------------
 #//////////////////////Декоратор анализа текста////////////////////////////////////
 #----------------------------------------------------------------------------------
 
+
+
+@bot.message_handler(content_types=["text"])
+def handle_text(message):
 
 # -----------------------Пасхалка на желдакова--------------------------------------
 
@@ -106,7 +104,7 @@ def handle_docs_photo(message):
 
     elif message.text == "Фото расписания":
         answer = "Photot shared"
-        directory = "C:/Users/ivan.savarin/Documents/GitHub/cyber41/photos"
+        directory = "E:/cyber_bot/cyber41/photos"
         all_files_in_dir = os.listdir(directory)
         print(all_files_in_dir)
         for file in all_files_in_dir:
@@ -130,7 +128,7 @@ def handle_docs_photo(message):
         send = config.wdays[time.localtime().tm_wday+1]
         print(send)
         weekNumber = date.today().isocalendar()[1]
-        vivod = []
+        #vivod = []
         print("weeknumber is " +str(weekNumber))
         if weekNumber%2 == 0:
             if send in config.shedule['2t']:
@@ -152,8 +150,7 @@ def handle_docs_photo(message):
 #---------------------------------Молчание------------------------------------------
 
     else:
-        log()
-
+        print('nothing happens')
 
 
 #---------------------------Бесконечная работа--------------------------------------
