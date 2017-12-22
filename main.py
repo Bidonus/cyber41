@@ -82,7 +82,7 @@ def stop(message):
 
 @bot.message_handler(commands=['help'])
 def handle_text(message):
-    bot.send_message(message.from_user.id, config.help_message)
+    bot.send_message(message.chat.id, config.help_message)
 
 
 
@@ -152,16 +152,20 @@ def modul_calculate(message):
     print(a)
     counts = a.split()
     for i in counts:
-        if i == 0:
-            if i.isdigit():
+        if i.isdigit():
+            if int(i) > 0:
                 print(counts)
                 result = (int(counts[0])**int(counts[1]))%int(counts[2])
                 print(result)
                 bot.send_message(message.chat.id, "Остаток по модулю = " + str(result))
                 break
+            else:
+                print("ne chislo")
+                bot.send_message(message.chat.id, "Начни заново и введи числа, без нулей и букв!")
+                break
         else:
             print("ne chislo")
-            bot.send_message(message.chat.id, "Начти заново и введи числа, без нулей и букв!")
+            bot.send_message(message.chat.id, "Начни заново и введи числа, без нулей и букв!")
             break
 
 
