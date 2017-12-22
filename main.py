@@ -48,7 +48,7 @@ def log(message, answer):
 #-------------------------------Старт функция--------------------------------------
 
 
-@bot.message_handler(commands=['start'])
+'''@bot.message_handler(commands=['start'])
 def handle_start(message):
     user_markup = telebot.types.ReplyKeyboardMarkup(True, False)
     #user_markup.row('/start', '/stop')
@@ -58,8 +58,19 @@ def handle_start(message):
     #user_markup.row('Закрыть панель', 'Остаток по модулю')
     bot.send_message(message.chat.id, "Здарова братва !", reply_markup=user_markup)
     bot.send_message(message.chat.id, "Для начала добавь меня в личные диалоги чтобы я мог отсылать тебе информацию \n @Cyber41_bot <-- Жми !")
+'''
 
 
+#@bot.message_handler(commands=['panel'])
+def panel(message):
+    user_markup = telebot.types.ReplyKeyboardMarkup(True, False)
+    #user_markup.row('/start', '/stop')
+    user_markup.row('Фото расписания', 'Рандом стикер')
+    user_markup.row('Хелпа', 'Пары на завтра')
+    user_markup.row('Остаток по модулю')
+    #user_markup.row('Закрыть панель', 'Остаток по модулю')
+    bot.send_message(message.chat.id, "Здарова братва !", reply_markup=user_markup)
+    bot.send_message(message.chat.id, "Для начала добавь меня в личные диалоги чтобы я мог отсылать тебе информацию \n @Cyber41_bot <-- Жми !")
 
 #------------------------------Стоп функция-----------------------------------------
 
@@ -252,7 +263,10 @@ def handle_text(message):
 
     elif message.text.lower() == "хелпа":
         print("HELP CALLED")
-        bot.send_message(message.from_user.id, config.help_message)
+        bot.send_message(message.chat.id, config.help_message)
+
+    elif message.text.lower() == 'panelturnon':
+        panel(message)
 
 #---------------------------------Молчание------------------------------------------
 
