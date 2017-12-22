@@ -9,12 +9,17 @@ import urllib.request, urllib.parse,urllib
 import requests
 from googleapiclient.discovery import build
 import pprint
+from telebot import types
+
 
 #----------------------------------------------------------------------------------
 #///////////////////////////////Связь с ботом//////////////////////////////////////
 #----------------------------------------------------------------------------------
 
+
 bot = telebot.TeleBot(config.token)
+service = build("customsearch", "v1", developerKey=config.CUSTOM_SEARCH_TOKEN)
+
 
 
 #----------------------------------------------------------------------------------
@@ -22,7 +27,6 @@ bot = telebot.TeleBot(config.token)
 #----------------------------------------------------------------------------------
 
 
-MY_IP = '127.0.0.1'
 
 def log(message, answer):
     print("\n --------")
@@ -35,21 +39,14 @@ def log(message, answer):
     print(answer)
 
 
-'''def google_search(search_term, api_key, cse_id, **kwargs):
-    service = build("customsearch", "v1", developerKey=config.api_key)
-    res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
-    return res['items']
-results = google_search(
-    'stackoverflow site:en.wikipedia.org', my_api_key, my_cse_id, num=10)
-for result in results:
-    pprint.pprint(result)'''
+
 
 #----------------------------------------------------------------------------------
 #//////////////////////Декораторы основных команд//////////////////////////////////
 #----------------------------------------------------------------------------------
 
-
 #-------------------------------Старт функция--------------------------------------
+
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -57,57 +54,94 @@ def handle_start(message):
     #user_markup.row('/start', '/stop')
     user_markup.row('Фото расписания', 'Рандом стикер')
     user_markup.row('Хелпа', 'Пары на завтра')
-    user_markup.row('/stop', '/mod')
-    bot.send_message(message.chat.id, "Стартуем", reply_markup=user_markup)
+    user_markup.row('Остаток по модулю')
+    #user_markup.row('Закрыть панель', 'Остаток по модулю')
+    bot.send_message(message.chat.id, "Здарова братва !", reply_markup=user_markup)
+    bot.send_message(message.chat.id, "Для начала добавь меня в личные диалоги чтобы я мог отсылать тебе информацию \n @Cyber41_bot <-- Жми !")
+
+
 
 #------------------------------Стоп функция-----------------------------------------
 
-@bot.message_handler(commands=['stop'])
-def handle_start(message):
+
+@bot.message_handler(commands=['stopthisshit'])
+def stop(message):
     hide_markup = telebot.types.ReplyKeyboardRemove()
-    bot.send_message(message.chat.id, "Чтобы вызвать меня - набери /start", reply_markup=hide_markup)
+    bot.send_message(message.chat.id, "Чтобы вызвать панель кнопок - набери /start", reply_markup=hide_markup)
+
+
+#@bot.message_handler(commands=['stop'])
+#def stop(message):
+#    hide_markup = telebot.types.ReplyKeyboardRemove()
+#    bot.send_message(message.chat.id, "Чтобы вызвать панель кнопок - набери /start", reply_markup=hide_markup)
+
+
 
 #------------------------------Хелп функция------------------------------------------
 
+
 @bot.message_handler(commands=['help'])
 def handle_text(message):
-    bot.send_message(message.chat.id, config.help_message)
+    bot.send_message(message.from_user.id, config.help_message)
 
 
 
-@bot.message_handler(commands=['google'])
-def goo(message):
-    msg = bot.reply_to(message, "Введи запрос")
-    bot.register_next_step_handler(msg, gle)
-def gle(message):
-    from
+#-----------------------------Инлайн поискового бота---------------------------------
 
 
 
-   ''' f = {'v': '1.0', 'q': message.text, 'userip': MY_IP}
-    g_search = urllib.parse.urlencode(f)
-    s = requests.Session()
-    url = ('https://ajax.googleapis.com/ajax/services/search/web?' + g_search)
-    r = s.get(url, cookies={'my': 'browser'})
-    response = r.text
-    #
-    pattern = '\"GwebSearch\","unescapedUrl\"\:\"(.*?)\"'
-    g_search = re.findall(pattern, response)
-    print(s)
-    print(g_search)
-    print(response)
-    print(r)
-    if len(g_search) > 0:
-        g_search = g_search[0]
-        g_search = g_search.replace('\\u0026', '&')
-        g_search = g_search.replace('\\u003d', '=')
-        print("doshlo do parsa")
-        bot.send_message(message.chat.id, text=g_search, parse_mode=ParseMode.MARKDOWN)
-    else:
-        bot.send_message(message.chat.id, text='Ничего не найдено.')'''
+@bot.inline_handler(lambda query: len(query.query) > 3)
+def gle(inline_query):
+    response = []  # store list of responses from the server
+    try:
+
+        results = service.cse().list(q=inline_query.query, cx=config.CSE_ID).execute()  # fetch result for the query.
+
+        if results:
+            # if result is found for the query
+
+            resp = types.InlineQueryResultArticle('1', 'Топ результатов',
+                                                  types.InputTextMessageContent('Топ 5 результатов: '))
+            response.append(resp)
+            item = results.get('items')
+
+            for i in range(0, 5, 1):
+                print(item[i])
+                resp = types.InlineQueryResultArticle(str(i+2), item[i]["Заголовок"],
+                                                      types.InputTextMessageContent(
+                                                               '*'+ item[i]["Заголовок"] + '*\n'
+                                                                + item[i]["snippet"] + '\n'
+                                                                + '[Смотреть больше]('+item[i]['link']+') ', parse_mode='Markdown'),
+                                                      url=item[i]['link'],
+                                                      description=item[i]['snippet'][:100])
+                response.append(resp)
+        else:
+            resp = types.InlineQueryResultArticle('1', 'Братан, очень сложный запрос, сделай проще?',
+                                                  types.InputTextMessageContent('Ещё раз поищи используя @thesearchbot'))
+            response.append(resp)
+        # print(response, "\n")
+
+    except Exception as e:
+        if str(e).__contains__('403'):
+            # if daily maximum search result exceeds.
+            resp = types.InlineQueryResultArticle('1', 'Сорян, максимум за день',
+                                                  types.InputTextMessageContent(
+                                                      'Лимит за день исчерпан порпобуй завтра :)'))
+        else:
+            resp = types.InlineQueryResultArticle('1', 'Не понял тебя \n' +
+                                                  'try again?',
+                                                  types.InputTextMessageContent('Ещё раз поищи с @thesearchbot'))
+        response.append(resp)
+
+        print("Exception: ", str(e))
+    finally:
+        # respond to the inline query
+        bot.answer_inline_query(inline_query.id, response, cache_time=1)
+
 
 
 #-----------------------------Калькулятор модуля-------------------------------------
+
 
 @bot.message_handler(commands=['mod'])
 def modul(message):
@@ -117,10 +151,20 @@ def modul_calculate(message):
     a = message.text
     print(a)
     counts = a.split()
-    print(counts)
-    result = (int(counts[0])**int(counts[1]))%int(counts[2])
-    print(result)
-    bot.send_message(message.chat.id, "Остаток по модулю = " +str(result))
+    for i in counts:
+        if i == 0:
+            if i.isdigit():
+                print(counts)
+                result = (int(counts[0])**int(counts[1]))%int(counts[2])
+                print(result)
+                bot.send_message(message.chat.id, "Остаток по модулю = " + str(result))
+                break
+        else:
+            print("ne chislo")
+            bot.send_message(message.chat.id, "Начти заново и введи числа, без нулей и букв!")
+            break
+
+
 
 #---------------------------Проверка на стикер--------------------------------------
 
@@ -150,8 +194,8 @@ def handle_text(message):
 #-----------------------Функция фото расписания--------------------------------------
 
     elif message.text == "Фото расписания":
-        answer = "Photot shared"
-        directory = "E:/cyber_bot/cyber41/photos"
+        answer = "Photo shared"
+        directory = "C:/Users/ivan.savarin/Documents/GitHub/cyber41/photos"
         all_files_in_dir = os.listdir(directory)
         print(all_files_in_dir)
         for file in all_files_in_dir:
@@ -167,6 +211,19 @@ def handle_text(message):
         stick = random.choice(config.sticker_pack_ids)
         log(message, answer)
         bot.send_sticker(message.chat.id, stick)
+
+
+    elif message.text.lower() == "остаток по модулю":
+        answer = "модуль включен"
+        log(message, answer)
+        modul(message)
+
+
+
+#    elif message.text.lower() == "закрыть панель":
+#        answer = "закрыта пенель"
+#        log(message, answer)
+#        stop(message)
 
 
 #------------------------Функция вывода расписания на завтра--------------------------
@@ -191,7 +248,7 @@ def handle_text(message):
 
     elif message.text.lower() == "хелпа":
         print("HELP CALLED")
-        bot.send_message(message.chat.id, config.help_message)
+        bot.send_message(message.from_user.id, config.help_message)
 
 #---------------------------------Молчание------------------------------------------
 
@@ -202,101 +259,3 @@ def handle_text(message):
 #---------------------------Бесконечная работа--------------------------------------
 
 bot.polling(none_stop=True, interval=0)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
